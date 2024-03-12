@@ -22,7 +22,7 @@ Features:
 
 *nfc = NoFatChaining 
 
-Requirements: Python 2.7.x only.
+Requirements: Python 3 only.
 
 ## Reference document ##
 
@@ -38,7 +38,7 @@ Reverse Engineering the Microsoft exFAT File System, by Robert Shullich, 2009, S
 
 **mmls** displays partitions information from the MBR:
 
-    >python exfat_dump.py mmls exfat12.001
+    >python3 exfat_dump.py mmls exfat12.001
     MBR, Partition table:
     bootable type      start        end       size
         0x80 0x07 0000000051 0000060800 0000060749 (ExFAT/NTFS)
@@ -46,7 +46,7 @@ Reverse Engineering the Microsoft exFAT File System, by Robert Shullich, 2009, S
 **fsstat** displays filesystem information, mainly using VBR content. Volume label comes from root directory and free/allocated cluster from Bitmap. Option **-o** is used to explicit which partition to use, via its starting sector.
 If ommited, the first partition with type 7 is used.
 
-    >python exfat_dump.py fsstat -o 51 exfat12.001
+    >python3 exfat_dump.py fsstat -o 51 exfat12.001
     FILE SYSTEM INFORMATION
     --------------------------------------------
     File System Type: EXFAT
@@ -68,7 +68,7 @@ If ommited, the first partition with type 7 is used.
 **fls** command is used to list directory entries. First column is modification timestamp, then attributes, first cluster number (0 means irrelevant), content size and entry name. 
 In the following example, the file *adencrypt.exe* starts at cluster #8, its size is 231936 bytes.
 
-    >python exfat_dump.py fls exfat12.001
+    >python3 exfat_dump.py fls exfat12.001
     2012/08/23 22:13:00:000 a----       8  231936 /adencrypt_gui.exe
     2012/08/23 22:12:52:000 a----     122    7680 /adfs_globals.dll
     2012/08/23 22:12:50:000 a----     126   70144 /ADIsoDLL.dll
@@ -95,7 +95,7 @@ In the following example, the file *adencrypt.exe* starts at cluster #8, its siz
 
 Option **-r** is used to list recursively directories:
 
-	>python exfat_dump.py fls -r exfat12.001
+	>python3 exfat_dump.py fls -r exfat12.001
     2012/08/23 22:13:00:000 a----       8  231936 /adencrypt_gui.exe
     2012/08/23 22:12:52:000 a----     122    7680 /adfs_globals.dll
     2012/08/23 22:12:50:000 a----     126   70144 /ADIsoDLL.dll
@@ -124,7 +124,7 @@ Option **-r** is used to list recursively directories:
 
 With option **-l**, a lot more details can be displayed, (a)ccess and creation/(b)irth timestamps, secondary count (sc) value and cluster list method (FAT or NoFastChain -nfc-):
 
-     >python exfat_dump.py fls -l exfat12.001
+     >python3 exfat_dump.py fls -l exfat12.001
      i=      8 l= 231936 a---- m=2012/08/23 22:13:00:000 a=2015/09/17 21:24:50:000 b=2015/09/17 21:24:50:104 sc=3 nfc /adencrypt_gui.exe
      i=    122 l=   7680 a---- m=2012/08/23 22:12:52:000 a=2015/09/17 21:25:06:000 b=2015/09/17 21:25:06:039 sc=3 nfc /adfs_globals.dll
      i=    126 l=  70144 a---- m=2012/08/23 22:12:50:000 a=2015/09/17 21:25:06:000 b=2015/09/17 21:25:06:086 sc=2 nfc /ADIsoDLL.dll
@@ -152,7 +152,7 @@ With option **-l**, a lot more details can be displayed, (a)ccess and creation/(
 
 With debug level 1 (**-d 1**), MBR, VBR and Bitmap information is shown:
 
-    >python exfat_dump.py fls -l -r -d 1 exfat12.001
+    >python3 exfat_dump.py fls -l -r -d 1 exfat12.001
 
     command= fls -o 0 cluster -1 -r True -p False -d 1 -l True -h False
     MBR, Partition table:
@@ -213,7 +213,7 @@ The column with *i=* contains the first cluster number, which can be used by the
 
 File at cluster 1189, using the FAT, can be extracted using **icat**
 
-    >python exfat_dump.py icat -h _dev_exfat\exfat12.001 1189
+    >python3 exfat_dump.py icat -h _dev_exfat\exfat12.001 1189
     491c23aea08989cfec62af1a1ae67474d73cbeb1
 
 The **-h** option computes SHA1 value for extracted content
@@ -229,7 +229,7 @@ for a file with contiguous clusters (**nfc** flag)
 
 SHA1 for extracted content is:
 
-    >python exfat_dump.py icat -h exfat12.001 8973
+    >python3 exfat_dump.py icat -h exfat12.001 8973
     47f8c6549a641e2f97b121295628b5921f0a6827
 
 SHA1 for original file is:
@@ -239,12 +239,12 @@ SHA1 for original file is:
 
 With **istat** on file starting at cluster 8 (/adencrypt_gui.exe), here clusters are contiguous:
 
-    >python exfat_dump.py istat exfat12.001 8
+    >python3 exfat_dump.py istat exfat12.001 8
     clusterList: [8:121]
 
 It works also on root dir (cluster #6):
 
-    >python exfat_dump.py fsstat exfat12.001
+    >python3 exfat_dump.py fsstat exfat12.001
     FILE SYSTEM INFORMATION
     --------------------------------------------
     File System Type: EXFAT
@@ -263,12 +263,12 @@ It works also on root dir (cluster #6):
     Rootdir: 3 clusters (6 Kb)
     Bitmap= 15123 available clusters (30246 Kb), 1811 free clusters (3622 Kb), 13312 allocated clusters (26624 Kb)
 
-    >python exfat_dump.py istat exfat12.001 6
+    >python3 exfat_dump.py istat exfat12.001 6
     clusterList: [6, 8509, 8972]
 
 Using debug level 2 (**-d 2**) and **fls**, we can see all individual records for each directory entries:
 
-    >python exfat_dump.py fls -d 2 _dev_exfat\exfat12.001
+    >python3 exfat_dump.py fls -d 2 _dev_exfat\exfat12.001
     
     command= fls -o 0 cluster -1 -r False -p False -d 2 -l False -h False
     MBR, Partition table:
