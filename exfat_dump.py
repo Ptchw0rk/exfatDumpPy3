@@ -35,7 +35,7 @@ MBR_LBA_SIZE_OFFSET=12
 def readMBR(f):
   mbr = f.read(SECTOR_SIZE)
   if unpack('>H', mbr[SYNC_OFFSET:SYNC_OFFSET+2])[0]!=SYNC_VALUE:
-    print 'error: no sync value in MBR'  
+    print('error: no sync value in MBR')
     return None
   offset = PARTITION_LIST_OFFSET
   partitions = []
@@ -54,15 +54,15 @@ PARTITION_TYPE_NTFS_EXFAT=7
 partitionType = { str(PARTITION_TYPE_NTFS_EXFAT):'ExFAT/NTFS', '5':'Extended', '1': 'FAT12', '15':'FAT16', '12':'FAT32', '183':'Linux', '182':'LinuxSwap', '238':'EFI' }
 # display partitions information  
 def displayMBR( pl ):
-  print 'MBR, Partition table:'
-  print 'bootable type      start        end       size'
+  print('MBR, Partition table:')
+  print('bootable type      start        end       size')
   for p in pl:  
     boot, type, start, size = p
     if '{0}'.format(ord(type)) in partitionType:
       strType = partitionType[ '{0}'.format(ord(type)) ]
     else:
       strType = '??'    
-    print '    0x%02x 0x%02x %010d %010d %010d (%s)' % ( ord(boot), ord(type), start, start+size, size, strType )
+    print('    0x%02x 0x%02x %010d %010d %010d (%s)' % ( ord(boot), ord(type), start, start+size, size, strType ))
   print  
 
 #class exFAT functions members should here  
@@ -87,17 +87,17 @@ def readVBR( f, offset ):
   f.seek( offset*SECTOR_SIZE )
   vbrData = f.read( VBR_SIZE*SECTOR_SIZE )  
   if unpack('>H', vbrData[SYNC_OFFSET:SYNC_OFFSET+2])[0]!=SYNC_VALUE:
-    print 'error: no sync value in VBR'  
+    print('error: no sync value in VBR'  )
     return None
   signature = vbrData[EXFAT_SIGN_OFFSET:EXFAT_SIGN_OFFSET+8]
   if signature!='EXFAT   ':
-    print 'error: not ExFAT'
+    print('error: not ExFAT')
     return None
   vbr[ 'signature' ] = signature  
   vbr1 = unpack('<Q',vbrData[EXFAT_VBR1_OFFSET:EXFAT_VBR1_OFFSET+8])[0]
   vbr[ 'vbr1Offset' ] = vbr1
   if vbr1!=offset:
-    print 'error: vbr1 address'
+    print('error: vbr1 address')
     return None
   volSize = unpack('<Q', vbrData[EXFAT_VOLSIZE_OFFSET:EXFAT_VOLSIZE_OFFSET+8])[0]  
   vbr[ 'volSize' ] = volSize
@@ -125,10 +125,10 @@ FIRST_CLUSTER_NUMBER=2
 #there is no cluster#0 and cluster#1, first cluster is cluster#2  
 def readClusters( f, vbr, cluster, nbCluster=1 ):
   offset = vbr['dataAreaStart']+ (cluster-FIRST_CLUSTER_NUMBER)*vbr['sectorSize']*vbr['sectorsPerCluster']
-  #print 'offset cluster=0x%x' % offset
+  #print('offset cluster=0x%x' % offset
   f.seek(offset)
   if nbCluster>vbr[ 'nbClusters' ]:
-    print 'error: length out of range %d' % nbCluster
+    print('error: length out of range %d' % nbCluster)
     return None
   return f.read( vbr['sectorSize']*vbr['sectorsPerCluster']*nbCluster ) 
 
@@ -176,7 +176,7 @@ def isDir( entry ):
 def nextCluster( f, vbr, cluster ):
   offsetFat = vbr[ 'fat1Start' ]
   if (cluster*4) > ( vbr['fatSize']*vbr['sectorSize'] ) or cluster<2:
-    print 'error: cluster %d out of FAT' % cluster
+    print('error: cluster %d out of FAT' % cluster)
     return None
   f.seek( offsetFat+(cluster*4) )
   v = f.read(4)
@@ -253,29 +253,29 @@ def countClusters( f, vbr, entry ):
     return countChainedClusters( f, vbr, entry['entryCluster'] )
     
 def fsstat( partition, vbr ):
-  print 'FILE SYSTEM INFORMATION'
-  print '--------------------------------------------'
-  print 'File System Type: %s' % vbr[ 'signature' ]
-  print 'Sector size: %d bytes' % vbr['sectorSize'] 
-  print 'Cluster size: %d sectors' % vbr['sectorsPerCluster']
-  print 'FAT size: %d sectors' % vbr['fatSize']
-  print 'Data area size: %d clusters' % vbr['nbClusters']
-  print 'Volume label: %s' % vbr[ 'volumeLabel' ]
+  print('FILE SYSTEM INFORMATION')
+  print('--------------------------------------------')
+  print('File System Type: %s' % vbr[ 'signature' ])
+  print('Sector size: %d bytes' % vbr['sectorSize'] )
+  print('Cluster size: %d sectors' % vbr['sectorsPerCluster'])
+  print('FAT size: %d sectors' % vbr['fatSize'])
+  print('Data area size: %d clusters' % vbr['nbClusters'])
+  print('Volume label: %s' % vbr[ 'volumeLabel' ])
   vbr2Sector = vbr[ 'vbr1Start' ]+ 12*SECTOR_SIZE #each VBR is 12 sectors long
-  print 'VBR#1 0x%08x-0x%08x (sectors %d-%d)' % ( vbr[ 'vbr1Start' ], vbr2Sector, 
-    vbr[ 'vbr1Start' ]/SECTOR_SIZE, vbr[ 'vbr1Start' ]/SECTOR_SIZE +12 )
-  print 'VBR#2 0x%08x-0x%08x (sectors %d-%d)' % ( vbr2Sector, vbr2Sector+12*SECTOR_SIZE, 
-    vbr2Sector/SECTOR_SIZE, vbr2Sector/SECTOR_SIZE +12 )
+  print('VBR#1 0x%08x-0x%08x (sectors %d-%d)' % ( vbr[ 'vbr1Start' ], vbr2Sector, 
+    vbr[ 'vbr1Start' ]/SECTOR_SIZE, vbr[ 'vbr1Start' ]/SECTOR_SIZE +12 ))
+  print('VBR#2 0x%08x-0x%08x (sectors %d-%d)' % ( vbr2Sector, vbr2Sector+12*SECTOR_SIZE, 
+    vbr2Sector/SECTOR_SIZE, vbr2Sector/SECTOR_SIZE +12 ))
     
-  print 'FAT#1 0x%08x-0x%08x (sectors %d-%d)' % ( vbr[ 'fat1Start' ], vbr[ 'fat1Start' ]+ vbr['fatSize']*SECTOR_SIZE,
-    vbr[ 'fat1Start' ]/SECTOR_SIZE, vbr[ 'fat1Start' ]/SECTOR_SIZE + vbr['fatSize'])
+  print('FAT#1 0x%08x-0x%08x (sectors %d-%d)' % ( vbr[ 'fat1Start' ], vbr[ 'fat1Start' ]+ vbr['fatSize']*SECTOR_SIZE,
+    vbr[ 'fat1Start' ]/SECTOR_SIZE, vbr[ 'fat1Start' ]/SECTOR_SIZE + vbr['fatSize']))
   endOfdataArea = vbr[ 'dataAreaStart' ] + vbr['sectorsPerCluster']*vbr['sectorSize']*vbr['nbClusters']
-  print 'dataArea 0x%08x-0x%08x (sectors %d-%d, clusters %d-%d)' % ( vbr[ 'dataAreaStart' ], endOfdataArea,
-    vbr[ 'dataAreaStart' ]/SECTOR_SIZE, endOfdataArea/SECTOR_SIZE, FIRST_CLUSTER_NUMBER, vbr['nbClusters']+FIRST_CLUSTER_NUMBER )
+  print('dataArea 0x%08x-0x%08x (sectors %d-%d, clusters %d-%d)' % ( vbr[ 'dataAreaStart' ], endOfdataArea,
+    vbr[ 'dataAreaStart' ]/SECTOR_SIZE, endOfdataArea/SECTOR_SIZE, FIRST_CLUSTER_NUMBER, vbr['nbClusters']+FIRST_CLUSTER_NUMBER ))
 
   rootDir = vbr['dataAreaStart'] + vbr['sectorSize']*vbr['sectorsPerCluster']*(vbr['rootDirCluster']-FIRST_CLUSTER_NUMBER)
-  print 'rootDir at 0x%x (sector %d, cluster %d)' % ( rootDir, rootDir/SECTOR_SIZE, vbr['rootDirCluster'] )
-  print
+  print('rootDir at 0x%x (sector %d, cluster %d)' % ( rootDir, rootDir/SECTOR_SIZE, vbr['rootDirCluster'] ))
+  print()
 
 #did not find suited unicode or encode() function, should be encode('ascii','ignore'), no ?  
 def unicode2ascii( name ):
@@ -334,36 +334,36 @@ def getDirEntry( entry, path, long=False ):
 
 def printDirRecord85( record ): #and 0x05
   type = ord( record[0] )
-  print '%02x:file dir entry, sc=%d' % ( type, ord( record[1] ) ), #sc = secondary count
-  print getDateTimeStr( unpack('<L', record[8:12])[0], ord(record[20]) ),
+  print('%02x:file dir entry, sc=%d' % ( type, ord( record[1] ) )), #sc = secondary count
+  print(getDateTimeStr( unpack('<L', record[8:12])[0], ord(record[20]) ))
   if type==EXFAT_DIRRECORD_DEL_FILEDIR:
-    print ' (deleted)'
+    print(' (deleted)')
   else: #0x85
-    print      
+    print()
     
 def printDirRecordC0( record ): #and 0x40
   type = ord( record[0] )
-  print '%02x:stream ext' % type,
+  print('%02x:stream ext' % type)
   #cluster, datalen, valid datalen, name len
-  print 'i=%d l=%d vl=%d nl=%d' % ( unpack('<L', record[20:24])[0], 
+  print('i=%d l=%d vl=%d nl=%d' % ( unpack('<L', record[20:24])[0]),
     unpack('<Q', record[24:32])[0], unpack('<Q', record[8:16])[0], ord(record[3]) ),
   if ord(record[1])&NOT_FAT_CHAIN_FLAG > 0:
-    print 'nfc',
+    print('nfc')
   else:
-    print 'fat',
+    print('fat')
   if type==EXFAT_DIRRECORD_DEL_STREAM_EXT:
-    print ' (deleted)'
+    print(' (deleted)')
   else: #0xC0
-    print
+    print()
     
 def printDirRecordC1( record ): #and 0x41
   type = ord( record[0] )    
-  print '%02x:filename ext=' % type,
-  print unicode( record[2: EXFAT_DIRRECORD_SIZE] ),
+  print('%02x:filename ext=' % type)
+  print(unicode( record[2: EXFAT_DIRRECORD_SIZE] ))
   if type==EXFAT_DIRRECORD_DEL_FILENAME_EXT:
-    print ' (deleted)'
+    print(' (deleted)')
   else: #0xC1
-    print
+    print()
               
 ENTRY_STATE_START=0    
 ENTRY_STATE_85_SEEN=1
@@ -382,11 +382,11 @@ def parseDir( f, vbr, clusterData ):
       count = ord( clusterData[offset+1] )
       label = unicode( clusterData[offset+2:offset+count*2], errors='ignore')
       if debugLevel>1:
-        print '83:label= ' + label
+        print('83:label= ' + label)
       vbr[ 'volumeLabel' ] = unicode2ascii(label) 
     elif type==EXFAT_DIRRECORD_NOLABEL:
       if debugLevel>1:
-        print '03:no label'
+        print('03:no label')
       vbr[ 'volumeLabel' ] = ''
     elif type==EXFAT_DIRRECORD_BITMAP or type==EXFAT_DIRRECORD_UPCASE:
       #create 'virtual' entry
@@ -407,19 +407,19 @@ def parseDir( f, vbr, clusterData ):
         vEntry['name'] = 'bitmap'
         vbr[ 'bitmapEntry' ] = vEntry  
         if debugLevel>1:
-          print '81:bitmap', 
+          print('81:bitmap') 
       else: #0x82 EXFAT_DIRRECORD_UPCASE
         vbr[ 'upcaseCluster' ] =  entryCluster
         vbr[ 'upcaseLength' ] = dataLen   
         vEntry['name'] = 'upcase'
         if debugLevel>1:
-          print '82:upcase entry',
+          print('82:upcase entry')
       dir.append( vEntry )      
       if debugLevel>1:
-        print '%x %d' % ( entryCluster, dataLen)
+        print('%x %d' % ( entryCluster, dataLen))
     elif type==EXFAT_DIRRECORD_VOLUME_GUID:
       if debugLevel>1:
-        print 'a0:volume GUID entry'  
+        print('a0:volume GUID entry')
     elif (type&0x7f)==EXFAT_DIRRECORD_DEL_FILEDIR: #or 0x85
       if debugLevel>1:
         printDirRecord85( clusterData[offset:offset+EXFAT_DIRRECORD_SIZE] )
@@ -475,12 +475,12 @@ def parseDir( f, vbr, clusterData ):
           if remainingSC==0: #last 0xC1
             entry['name'] = entry['name'][:entry['nameLen']*2] #truncate to real length
             if debugLevel>1:
-              print '  ', unicode2ascii( entry['name'] )
+              print('  ', unicode2ascii( entry['name'] ))
             dir.append( entry )  
             entryState = ENTRY_STATE_LAST_C1_SEEN
     else:
       if debugLevel>1:
-        print '0x%02x:unknown' % type
+        print('0x%02x:unknown' % type)
     offset = offset + EXFAT_DIRRECORD_SIZE
   return dir  
 
@@ -500,7 +500,7 @@ def fls( f, vbr, dir, path, recur, long=False ):
     if debugLevel>0 or ( entry['type']==EXFAT_DIRRECORD_FILEDIR ):
       entryStr = getDirEntry( entry, path, long ) #get string describing this entry
     if entryStr != None:
-      print entryStr
+      print(entryStr)
       if isDir( entry ) and recur:
         #path = path + unicode2ascii( entry['name'] ) + '/'
         subdir = readDir( f, vbr, entry )
@@ -528,8 +528,8 @@ def contentStat( f, vbr, globalList ):
     elif entry['type']==EXFAT_DIRRECORD_FILEDIR: #do not count EXFAT_DIRRECORD_BITMAP and 
       files = files + 1  
       filesContentSize = filesContentSize + entry['dataLen']
-  print 'Directories: %d (%d Kb)' % (dir, dirContentSize/1024),
-  print 'Files: %d (%d Kb)' % (files, filesContentSize/1024)
+  print('Directories: %d (%d Kb)' % (dir, dirContentSize/1024))
+  print('Files: %d (%d Kb)' % (files, filesContentSize/1024))
   
   bitmap = readContent( f, vbr, vbr[ 'bitmapEntry' ] )
   allocClusters = countBitmap( bitmap )
@@ -538,29 +538,29 @@ def contentStat( f, vbr, globalList ):
   #roots dir has clained clusters
   rootDirClusterSize = countChainedClusters( f, vbr, vbr['rootDirCluster'] )
   
-  print 'Rootdir: %d clusters (%d Kb)' % ( rootDirClusterSize, 
-    (rootDirClusterSize*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024 )
-  print 'Bitmap= %d available clusters (%d Kb), %d free clusters (%d Kb), %d allocated clusters (%d Kb)' % ( 
+  print('Rootdir: %d clusters (%d Kb)' % ( rootDirClusterSize, 
+    (rootDirClusterSize*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024 ))
+  print('Bitmap= %d available clusters (%d Kb), %d free clusters (%d Kb), %d allocated clusters (%d Kb)' % ( 
     vbr['nbClusters'], (vbr['nbClusters']*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024,
     freeClusters, (freeClusters*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024, 
-    allocClusters, (allocClusters*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024 )
-  print
+    allocClusters, (allocClusters*vbr['sectorsPerCluster']*vbr['sectorSize'])/1024 ))
+  print()
         
 def usage():
-  print 'usage: exfat_dump.py command [options] imagefile [entry_number]'
-  print 'commands:'
-  print ' mmls = print partitions information'
-  print ' fls = lists directory entries. Options are -o -r -l'
-  print ' fsstat : filesystem information. Options: -o'
-  print ' icat : dumps file content (entry_number required)'
-  print ' istat : directory or file meta information (entry_number required)'
-  print ' Options:'
-  print ' -o = partition offset. Optional, by default use first partition with type=7'
-  print ' -l = long (detailed) information'
-  print ' -r = recursively lists directories content'
-  print ' -h = compute SHA1 for extracted file'
-  print ' -d debug_level (0 -default-, 1 or 2)'
-  print 
+  print('usage: exfat_dump.py command [options] imagefile [entry_number]')
+  print('commands:')
+  print(' mmls = print partitions information')
+  print(' fls = lists directory entries. Options are -o -r -l')
+  print(' fsstat : filesystem information. Options: -o')
+  print(' icat : dumps file content (entry_number required)')
+  print(' istat : directory or file meta information (entry_number required)')
+  print(' Options:')
+  print(' -o = partition offset. Optional, by default use first partition with type=7')
+  print(' -l = long (detailed) information')
+  print(' -r = recursively lists directories content')
+  print(' -h = compute SHA1 for extracted file')
+  print(' -d debug_level (0 -default-, 1 or 2)')
+  print ()
   sys.exit()  
   
 def CountBits(n):
@@ -573,8 +573,8 @@ def CountBits(n):
 
 def countBitmap( content ):
   if debugLevel>1:
-    print 'Bitmap:'
-    print hexlify(content)
+    print('Bitmap:')
+    print(hexlify(content))
   l = len(content)/4
   r = len(content)%4
   allocated = 0
@@ -594,13 +594,13 @@ def countBitmap( content ):
 #minimal istat command which gives additionnal info compared to fls -l, for directories or files  
 def istat( f, vbr, entry ):
   if entry['noFatChain']:
-    print 'clusterList: [%d:%d]' % ( cluster, cluster + size2Clusters( vbr, entry['dataLen'] )-1 )
+    print('clusterList: [%d:%d]' % ( cluster, cluster + size2Clusters( vbr, entry['dataLen'] )-1 ))
   else:
     clusterList = getChainedClustersList( f, vbr, cluster )
-    print 'clusterList:', clusterList  
+    print('clusterList:', clusterList)
 
-print 'exFAT_dump v0.3 (lclevy@free.fr, https://github.com/lclevy/)'
-print
+print('exFAT_dump v0.3 (lclevy@free.fr, https://github.com/lclevy/)')
+print()
     
 if len(sys.argv)<3:
   usage()
@@ -611,7 +611,7 @@ cluster = -1
 
 #verify if command is ok
 if command not in [ 'istat', 'icat', 'fsstat', 'fls', 'mmls' ]:
-  print 'unsupported command: %s' % command
+  print('unsupported command: %s' % command)
   usage()  
 
 #i commands requires an additional entry argument after imagefile 
@@ -624,14 +624,14 @@ else:
   else:
     usage()
     
-pl = readMBR( f )   
+pl = readMBR( f ) 
 if command=='mmls':
   displayMBR( pl )
   f.close()
   sys.exit()
  
 if pl==None: #no partition on this disk!
-  print 'no partition'
+  print('no partition')
   sys.exit()
 
 #possible improvement: use https://docs.python.org/2/library/argparse.html#module-argparse
@@ -665,13 +665,13 @@ while i < (len(sys.argv)-1): #parses arguments starting with -
     elif sys.argv[i]=='-l':    
       longList = True      
     else:
-      print 'error: invalid argument %s' % sys.argv[i]
+      print('error: invalid argument %s' % sys.argv[i])
       f.close()
       sys.exit()      
   i = i+1 #next argv   
   
 if debugLevel>0:
-  print 'command=',command, '-o', partOffset, 'cluster', cluster, '-r', recursive, '-p', fullPath, '-d', debugLevel, '-l', longList, '-h', hashFile
+  print('command=',command, '-o', partOffset, 'cluster', cluster, '-r', recursive, '-p', fullPath, '-d', debugLevel, '-l', longList, '-h', hashFile)
 
 f.seek(0, 2) #end of file  
 dumpSectorSize = f.tell() / SECTOR_SIZE  
@@ -695,12 +695,12 @@ else:
       break
  
 if foundPartition==False:
-  print 'error: -o value is not a valid start of partition'
+  print('error: -o value is not a valid start of partition')
   f.close()
   sys.exit()  
   
 if partOffset > dumpSectorSize:
-  print 'error: -o sector out of range'
+  print('error: -o sector out of range')
   f.close()
   sys.exit()  
   
@@ -735,15 +735,15 @@ elif debugLevel>0:
 if command=='icat' or command=='istat':
   #check cluster number is inside cluster Area
   if (cluster<FIRST_CLUSTER_NUMBER or cluster>vbr[ 'nbClusters' ]+FIRST_CLUSTER_NUMBER):
-    print 'error: cluster out of range'
+    print('error: cluster out of range')
     f.close()
     sys.exit()
   if cluster==vbr['rootDirCluster']: 
     if command=='istat':
       clusterList = getChainedClustersList( f, vbr, cluster )
-      print 'clusterList:', clusterList
+      print('clusterList:', clusterList)
     else:
-      print 'icat invalid on directory entry'    
+      print('icat invalid on directory entry'  )  
   else:  #not rootDir
     entrySize = -1  
     for entry in globalList: #check if entry is in existing file/dir entries
@@ -751,27 +751,27 @@ if command=='icat' or command=='istat':
         entrySize = entry['dataLen']
         break
     if entrySize<0: #cluster number not found
-      print 'incorrect cluster number'
+      print('incorrect cluster number')
       f.close()
       sys.exit()
     if command=='icat': #extract file content
       if isDir( entry ):
-        print 'icat invalid on directory entry'  
+        print('icat invalid on directory entry'  )
       else:  
         if entrySize>0:
           outFileName = unicode2ascii(entry['name'])
           fout = open( outFileName, 'wb')
-          print 'extracting %s, %d bytes' % ( outFileName, entrySize)
+          print('extracting %s, %d bytes' % ( outFileName, entrySize))
           extractContent( f, vbr, entry, fout )
           fout.close()  
           if hashFile:
-            print 'sha1=',
+            print('sha1=')
             fin = open( outFileName, 'rb')
             content = fin.read()
-            print sha1(content).hexdigest()
+            print(sha1(content).hexdigest())
             fin.close()
         elif entrySize==0:
-          print 'emptyFile'
+          print('emptyFile')
     else: 
       istat( f, vbr, entry )
   
